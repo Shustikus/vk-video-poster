@@ -30,7 +30,7 @@ npm install
 Поменяй вк токен в файле `.env`:
 
 ```env
-VK_TOKEN=ваш_токен
+VK_TOKEN=vk1.a.xxxxx
 VK_API_VERSION=5.199
 ```
 
