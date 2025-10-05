@@ -1,52 +1,69 @@
-Мини-утилита на Node.js для обновления поля poster у видео по ссылкам VK.
-Источники по приоритету: VK API video.get → embed-страница → каноническая страница → og:image.
-Поле link не изменяется.
+# VK Video Poster Resolver
 
-Быстрый старт
-npm i
-echo "VK_TOKEN=vk1.a.xxxxx" > .env
-node index.js videoItems.json
+Скрипт для массового получения и обновления постеров (обложек) видео ВКонтакте.  
+Работает через VK API (`video.get`) и fallback-методы (страницы `embed`/`canonical`), с учётом ретраев, rate-limit, и выбора лучшего постера по качеству.
 
-Формат входных данных
+## Требования
 
-videoItems.json — массив объектов с полем link (обязательно) и опциональным poster:
+- Node.js 18+
+- Токен VK API (user/service token с правом `video`)
+- Файл `videoItems.json` с массивом объектов вида:
 
+```json
 [
-  {"link":"https://vk.com/video?oid=-123&id=456","poster":null}
+  {
+    "link": "https://vk.com/video_ext.php?oid=123&id=456&hash=...",
+    "poster": null
+  }
 ]
+````
 
-Переменные окружения
+## Установка
 
-.env:
+```bash
+git clone https://github.com/Shustikus/vk-video-poster.git
+cd vk-video-poster
+npm install
+```
 
-VK_TOKEN=vk1.a.xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-# VK_API_VERSION=5.199   # опционально
+Поменяй вк токен в файле `.env`:
 
-Флаги
+```env
+VK_TOKEN=ваш_токен
+VK_API_VERSION=5.199
+```
 
---force — перезаписывать poster даже если уже есть
+## Использование
 
---concurrency=2 — параллельность (по умолчанию 2)
+```bash
+node index.js videoItems.json
+```
 
---debug — подробные логи
+### Аргументы
 
-Что делает
+* `--force` — перезаписывать постеры даже у тех элементов, где они уже есть.
+* `--concurrency=N` — число параллельных запросов (по умолчанию 2).
+* `--debug` — подробные логи.
 
-Парсит oid/id из link.
+### Пример
 
-Пытается получить постер через video.get (берёт самое широкое image[] или photo_800/640/...).
+```bash
+node index.js videoItems.json --force --concurrency=4 --debug
+```
 
-Если нет — парсит embed/каноническую страницу, выбирая только i.mycdn.me/getVideoPreview
-(приоритет vid_x > vid_w > vid_u > vid_l, затем ширина).
+## Результат работы
 
-Если mycdn не найден — берёт og:image.
+* Обновлённый `videoItems.json` (перезаписывается атомарно через `.tmp`).
+* Файл `failed.log` — список проблемных кейсов (если такие были).
+* Подробная сводка в консоли: количество обновлений, пропусков, ошибок, статистика по источникам (`vk_get`, `embed`, `canonical`, `mycdn`, `og_only`).
 
-Обновляет poster и перезаписывает исходный JSON (через .tmp).
+## Логика поиска постеров
 
-Проблемные кейсы — в failed.log.
+1. **VK API `video.get`** — основной способ, быстрый и надёжный.
+2. **Embed-страница (`video_ext.php`)** — поиск постера в HTML (mycdn/og:image).
+3. **Canonical-страница (`vk.com/video...`)** — fallback при неудаче.
 
-Выход
+## Ограничения
 
-Консольная сводка (updated/skipped/notFound, источники, ретраи).
-
-failed.log — строки JSON с причинами (parse_failed, video.get_error, embed_error, canonical_error, not_found_anywhere).
+* Максимум 10 000 видео на владельца (ограничение `video.get`).
+* При rate-limit VK автоматически выполняются повторные попытки с backoff.
