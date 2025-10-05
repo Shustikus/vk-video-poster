@@ -1,22 +1,3 @@
-// -*- coding: utf-8 -*-
-// Обновляем "poster" у ссылок VK через ТОЛЬКО video.get + парсинг страниц.
-// Поле link НЕ меняем. Фолбэк: ТОЛЬКО i.mycdn.me/getVideoPreview
-// приоритет fn: vid_x > vid_w > vid_u > vid_l, затем по ширине.
-//
-// Зависимости: npm i axios dotenv
-// .env: VK_TOKEN=xxxxx  (опц. VK_API_VERSION=5.199)
-//
-// Что изменено:
-// 1) Упростил структуру: общий парсер HTML и один fetchPosterFromUrl()
-// 2) Добавил подробные логи: прогресс, ретраи, источники, ошибки, сводную статистику
-// 3) Параметры CLI:  --force  --concurrency=2  --debug
-//
-// Пример:
-//   node index.js videoItems.json --concurrency=3 --debug
-//   node index.js videoItems.json --force
-//
-// Автор: упрощено и прокомментировано
-
 const fs = require('fs/promises')
 const path = require('path')
 const axios = require('axios')
