@@ -7,6 +7,7 @@
 
 - Node.js 18+
 - Токен VK API (user/service token с правом `video`)
+-  **Примечание:** токен можно получить через <a href="https://vkhost.github.io/" target="_blank">VKHost</a>.
 - Файл `videoItems.json` с массивом объектов вида:
 
 ```json
